@@ -652,7 +652,15 @@ Request.prototype.init = function (options) {
     if (options.agentClass) {
       self.agentClass = options.agentClass
     } else if (options.forever) {
-      self.agentClass = protocol === 'http:' ? ForeverAgent : ForeverAgent.SSL
+      // Only use ForeverAgent for node major version 0
+      if (!!process.version.match('^v0.')) {
+        self.agentClass = protocol === 'http:' ? ForeverAgent : ForeverAgent.SSL
+      } else {
+        self.agent = new self.httpModule.Agent({
+          keepAlive: true,
+          maxSockets: (options.pool && options.pool.maxSockets) || Infinity
+        })
+      }
     } else {
       self.agentClass = self.httpModule.Agent
     }
